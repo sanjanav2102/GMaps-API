@@ -6,7 +6,7 @@ app.use(cors());
 app.use(express.json());
 
 // 🔹 TEMP DATA (later this comes from MongoDB)
-app.get("/api/map-data", (req, res) => {
+/*app.get("/api/map-data", (req, res) => {
   res.json({
     source: {
       lat: 12.9716,
@@ -24,4 +24,4 @@ app.get("/api/map-data", (req, res) => {
 const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
-});
+});*/
