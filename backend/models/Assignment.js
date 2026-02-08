@@ -1,18 +1,10 @@
 const mongoose = require("mongoose");
 
 const AssignmentSchema = new mongoose.Schema({
-  donationLocation: {
-    lat: Number,
-    lng: Number
-  },
-  ngoLocation: {
-    lat: Number,
-    lng: Number
-  },
-  volunteerLocation: {
-    lat: Number,
-    lng: Number
-  },
+  assignmentId: String,
+  volunteerAddress: String,
+  donorAddress: String,
+  consumerAddress: String,
   status: String
 });
 
