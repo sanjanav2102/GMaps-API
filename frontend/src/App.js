@@ -30,6 +30,7 @@ function App() {
       {
         origin: locations.source,
         destination: locations.destination,
+        volunteer: locations.volunteer,
         travelMode: window.google.maps.TravelMode.DRIVING
       },
       (result, status) => {
@@ -52,6 +53,7 @@ function App() {
         zoom={13}
       >
         <Marker position={locations.source} label="S" />
+        <Marker position={locations.volunteer} label="V" />
         <Marker position={locations.destination} label="D" />
         {directions && <DirectionsRenderer directions={directions} />}
       </GoogleMap>
