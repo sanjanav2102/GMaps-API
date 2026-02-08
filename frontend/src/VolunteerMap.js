@@ -4,7 +4,7 @@ import { vehicleIcon,sourceIcon,destinationIcon } from "./icons";
 import "./VolunteerMap.css";
 
 
-// 🔹 Address → lat/lng (FREE)
+// Address → lat/lng 
 async function geocode(address) {
   const res = await fetch(
     `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`
@@ -13,7 +13,7 @@ async function geocode(address) {
   return { lat: +data[0].lat, lng: +data[0].lon };
 }
 
-// 🔹 Routing (FREE)
+// Routing 
 async function getRoute(start, end) {
   const res = await fetch(
     `https://router.project-osrm.org/route/v1/driving/` +
@@ -33,9 +33,11 @@ function VolunteerMap() {
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("to_source");
   const [showModal, setShowModal] = useState(false);
+  const [completed, setCompleted] = useState(false);
 
 
-  // 🔹 Fetch addresses from backend
+
+  // Fetch addresses from backend
   useEffect(() => {
     async function load() {
      const res = await fetch("http://localhost:5000/api/assignment/demo1");
@@ -45,6 +47,7 @@ function VolunteerMap() {
       const volunteer = await geocode(data.volunteerAddress);
       const donor = await geocode(data.donorAddress);
       const consumer = await geocode(data.consumerAddress);
+      
 
     const route =
     phase === "to_source"
@@ -60,45 +63,98 @@ function VolunteerMap() {
     load();
   }, []);
 
-  // 🔹 Animate volunteer
-  useEffect(() => {
-    if (!path.length) return;
+  // Animate volunteer
+useEffect(() => {
+  if (!path.length) return;
 
-    const interval = setInterval(() => {
-      if (index < path.length) {
-        setVolunteerPos(path[index]);
-        setIndex(i => i + 1);
+  const interval = setInterval(() => {
+    if (index < path.length) {
+      setVolunteerPos(path[index]);
+      setIndex(i => i + 1);
+    } else {
+      clearInterval(interval);
+
+      // Phase switch
+      if (phase === "to_source") {
+        setShowModal(true);
+        setPhase("waiting_pickup");
+      } else if (phase === "to_destination") {
+        setShowModal(true);
+        setPhase("completed");
       }
-    }, 600);
+    }
+  }, 1000);
 
-    return () => clearInterval(interval);
-  }, [index, path]);
+  return () => clearInterval(interval);
+}, [index, path, phase]);
+
+function handleModalOk() {
+  setShowModal(false);
+  setIndex(0);
+
+  if (phase === "waiting_pickup") {
+    setPhase("to_destination");
+    getRoute(source, destination).then(setPath);
+  }
+}
+
 
   if (!volunteerPos || !source || !destination) {
     return <p>Loading map...</p>;
   }
 
   return (
+  <div style={{ position: "relative" }}>
+    
     <MapContainer
       center={volunteerPos}
       zoom={14}
       style={{ height: "450px", width: "100%" }}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
+     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {/* Source (Donor) */}
-        <Marker position={source} icon={sourceIcon} />
+      <Marker position={source} icon={sourceIcon} />
 
-        {/* Destination (Consumer) */}
-        <Marker position={destination} icon={destinationIcon} />
+      {/* Destination (Consumer) */}
+      <Marker position={destination} icon={destinationIcon} />
 
-        {/* Moving Volunteer Vehicle */}
-        <Marker position={volunteerPos} icon={vehicleIcon} />
+      {/* Moving Volunteer Vehicle */}
+      <Marker position={volunteerPos} icon={vehicleIcon} />
 
       {/* Route */}
-      <Polyline positions={path} />
+      <Polyline
+        positions={path}
+        pathOptions={{
+          color: phase === "to_source" ? "#1abc9c" : "#ff6b6b",
+          weight: 5
+        }}
+      />
     </MapContainer>
-  );
+
+    {/*  MODAL OVERLAY */}
+    {showModal && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h3>
+            {phase === "waiting_pickup"
+              ? "Reached Source"
+              : "Reached Destination"}
+          </h3>
+
+          <p>
+            {phase === "waiting_pickup"
+              ? "Pick up the food from donor."
+              : "Hand over food to consumer."}
+          </p>
+
+          <button onClick={handleModalOk}>OK</button>
+        </div>
+      </div>
+    )}
+
+  </div>
+);
+
 }
 
 export default VolunteerMap;
