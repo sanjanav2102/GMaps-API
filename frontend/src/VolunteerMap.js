@@ -1,6 +1,8 @@
 import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
 import { useEffect, useState } from "react";
-import { vehicleIcon } from "./icons";
+import { vehicleIcon,sourceIcon,destinationIcon } from "./icons";
+import "./VolunteerMap.css";
+
 
 // 🔹 Address → lat/lng (FREE)
 async function geocode(address) {
@@ -29,6 +31,9 @@ function VolunteerMap() {
   const [destination, setDestination] = useState(null);
   const [path, setPath] = useState([]);
   const [index, setIndex] = useState(0);
+  const [phase, setPhase] = useState("to_source");
+  const [showModal, setShowModal] = useState(false);
+
 
   // 🔹 Fetch addresses from backend
   useEffect(() => {
@@ -41,7 +46,11 @@ function VolunteerMap() {
       const donor = await geocode(data.donorAddress);
       const consumer = await geocode(data.consumerAddress);
 
-      const route = await getRoute(volunteer, donor);
+    const route =
+    phase === "to_source"
+        ? await getRoute(volunteer, donor)
+        : await getRoute(donor, consumer);
+
 
       setVolunteerPos(volunteer);
       setSource(donor);
@@ -77,12 +86,14 @@ function VolunteerMap() {
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* S & D markers */}
-      <Marker position={source} />
-      <Marker position={destination} />
+      {/* Source (Donor) */}
+        <Marker position={source} icon={sourceIcon} />
 
-      {/* Moving vehicle */}
-      <Marker position={volunteerPos} icon={vehicleIcon} />
+        {/* Destination (Consumer) */}
+        <Marker position={destination} icon={destinationIcon} />
+
+        {/* Moving Volunteer Vehicle */}
+        <Marker position={volunteerPos} icon={vehicleIcon} />
 
       {/* Route */}
       <Polyline positions={path} />
