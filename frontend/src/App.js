@@ -6,65 +6,57 @@ import {
 } from "@react-google-maps/api";
 import { useEffect, useState } from "react";
 
-const containerStyle = {
-  width: "100%",
-  height: "400px"
-};
-
 function App() {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
     libraries: ["places"]
-    
   });
 
-  // Example locations (you can later fetch from DB)
-  const source = { lat: 12.9716, lng: 77.5946 };      // Donor
-  const destination = { lat: 12.9352, lng: 77.6245 }; // NGO
-
+  const [locations, setLocations] = useState(null);
   const [directions, setDirections] = useState(null);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    fetch("http://localhost:5000/api/map-data")
+      .then(res => res.json())
+      .then(data => setLocations(data));
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !locations) return;
 
     const service = new window.google.maps.DirectionsService();
 
     service.route(
       {
-        origin: source,
-        destination: destination,
+        origin: locations.source,
+        destination: locations.destination,
         travelMode: window.google.maps.TravelMode.DRIVING
       },
       (result, status) => {
-        if (status === "OK") {
-          setDirections(result);
-        }
+        if (status === "OK") setDirections(result);
       }
     );
-  }, [isLoaded]);
+  }, [isLoaded, locations]);
 
-  if (!isLoaded) return <p>Loading map...</p>;
+  if (!isLoaded || !locations) {
+    return <p>Loading...</p>;
+  }
 
   return (
-    
     <div style={{ padding: "20px" }}>
-      <h2>Google Maps Test (CRA)</h2>
+      <h2>Google Maps Test (Backend Data)</h2>
 
       <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={source}
+        mapContainerStyle={{ width: "100%", height: "400px" }}
+        center={locations.source}
         zoom={13}
       >
-        <Marker position={source} label="S" />
-        <Marker position={destination} label="D" />
-
-        {directions && (
-          <DirectionsRenderer directions={directions} />
-        )}
+        <Marker position={locations.source} label="S" />
+        <Marker position={locations.destination} label="D" />
+        {directions && <DirectionsRenderer directions={directions} />}
       </GoogleMap>
     </div>
   );
 }
 
-console.log(process.env.REACT_APP_GOOGLE_MAPS_API_KEY);
 export default App;
