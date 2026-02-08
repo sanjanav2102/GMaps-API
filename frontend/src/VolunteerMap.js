@@ -33,8 +33,6 @@ function VolunteerMap() {
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState("to_source");
   const [showModal, setShowModal] = useState(false);
-  const [completed, setCompleted] = useState(false);
-
 
 
   // Fetch addresses from backend
@@ -47,7 +45,6 @@ function VolunteerMap() {
       const volunteer = await geocode(data.volunteerAddress);
       const donor = await geocode(data.donorAddress);
       const consumer = await geocode(data.consumerAddress);
-      
 
     const route =
     phase === "to_source"
@@ -83,7 +80,7 @@ useEffect(() => {
         setPhase("completed");
       }
     }
-  }, 1000);
+  }, 200);
 
   return () => clearInterval(interval);
 }, [index, path, phase]);
@@ -104,34 +101,73 @@ function handleModalOk() {
   }
 
   return (
-  <div style={{ position: "relative" }}>
-    
-    <MapContainer
-      center={volunteerPos}
-      zoom={14}
-      style={{ height: "450px", width: "100%" }}
-    >
-     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      {/* Source (Donor) */}
-      <Marker position={source} icon={sourceIcon} />
+  <div className="volunteer-map-page">
+    <div className="map-card">
 
-      {/* Destination (Consumer) */}
-      <Marker position={destination} icon={destinationIcon} />
+      <h2 className="map-title">
+        Volunteer Live Navigation
+      </h2>
 
-      {/* Moving Volunteer Vehicle */}
-      <Marker position={volunteerPos} icon={vehicleIcon} />
+      <MapContainer
+        center={volunteerPos}
+        zoom={14}
+        className="map-container"
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-      {/* Route */}
-      <Polyline
-        positions={path}
-        pathOptions={{
-          color: phase === "to_source" ? "#1abc9c" : "#ff6b6b",
-          weight: 5
-        }}
-      />
-    </MapContainer>
+        {/* Source (Donor) */}
+        <Marker position={source} icon={sourceIcon} />
 
-    {/*  MODAL OVERLAY */}
+        {/* Destination (Consumer) */}
+        <Marker position={destination} icon={destinationIcon} />
+
+        {/* Moving Volunteer Vehicle */}
+        <Marker position={volunteerPos} icon={vehicleIcon} />
+
+        {/* Route */}
+        <Polyline
+          positions={path}
+          pathOptions={{
+            color: phase === "to_source" ? "#1abc9c" : "#ff6b6b",
+            weight: 5
+          }}
+        />
+      </MapContainer>
+
+      {/* 🔹 ROUTE INFO */}
+      <div className="route-info">
+        <div className="info-box">
+          <span className="label">Status</span>
+          <span className="value">
+            {phase === "to_source"
+              ? "Heading to Donor"
+              : phase === "to_destination"
+              ? "Heading to Consumer"
+              : "Completed"}
+          </span>
+        </div>
+
+        <div className="info-box">
+          <span className="label">Distance</span>
+          <span className="value">
+            {(path.length * 0.02).toFixed(1)} km
+          </span>
+        </div>
+
+        <div className="info-box full">
+          <span className="label">Directions</span>
+          <span className="value">
+            {phase === "to_source"
+              ? "Proceed to donor location for pickup."
+              : "Deliver food to consumer safely."}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {/* 🔔 MODAL OVERLAY */}
     {showModal && (
       <div className="modal-overlay">
         <div className="modal">
@@ -151,9 +187,9 @@ function handleModalOk() {
         </div>
       </div>
     )}
-
   </div>
 );
+
 
 }
 
